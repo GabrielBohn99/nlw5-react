@@ -1,12 +1,14 @@
 import { GetStaticPaths, GetStaticProps } from "next";
-import { useRouter } from "next/router";
 import { parseISO, format } from "date-fns";
 import ptBR from "date-fns/locale/pt-BR";
 import { convertDurationToTimeString } from "../../utils/convertDurationToTimeString";
 import { api } from "../../services/api";
+import Link from "next/link";
 
 import styles from "./episode.module.scss";
 import Image from "next/image";
+import { usePlayer } from "../../contexts/PlayerContext";
+import Head from "next/head";
 
 type Episode = {
   id: string;
@@ -25,36 +27,77 @@ type EpisodeProps = {
 };
 
 export default function Episode({ episode }: EpisodeProps) {
+  const { play } = usePlayer();
+
+  //Quando fallback: true
+
+  // const router = useRouter()
+
+  // if (router.isFallback) {
+  //   return <p>Carregando...</p>
+  // }
+
   return (
     <div className={styles.episode}>
+      <Head>
+        <title>{episode.title} | Podcastr</title>
+      </Head>
       <div className={styles.thumbnailContainer}>
-        <button>
-          <img src="/arrow-left.svg" alt="Voltar" />
-        </button>
+        <Link href="/">
+          <button type="button">
+            <img src="/arrow-left.svg" alt="Voltar" />
+          </button>
+        </Link>
         <Image
           width={700}
           height={160}
           src={episode.thumbnail}
           objectFit="cover"
         />
-        <button>
-            <img src="/play.svg" alt="Tocar episódio"/>
+        <button type="button" onClick={() => play(episode)}>
+          <img src="/play.svg" alt="Tocar episódio" />
         </button>
       </div>
 
       <header>
-          <h1>{episode.title}</h1>
-          <span>{episode.members}</span>
-          <span>{episode.publishedAt}</span>
-          <span>{episode.durationAsString}</span>
+        <h1>{episode.title}</h1>
+        <span>{episode.members}</span>
+        <span>{episode.publishedAt}</span>
+        <span>{episode.durationAsString}</span>
       </header>
 
-      <div className={styles.description} dangerouslySetInnerHTML={{__html: episode.description }}/>
+      <div
+        className={styles.description}
+        dangerouslySetInnerHTML={{ __html: episode.description }}
+      />
     </div>
   );
 }
 
 export const getStaticPaths: GetStaticPaths = async () => {
+  //Fazer uma buildo com os itens mais acessados para fazer essas pgs serem acessadas mais rapido
+
+  // const { data } = await api.get("episodes", {
+  //   params: {
+  //     _limit: 12,
+  //     _sort: "published_at",
+  //     _order: "desc",
+  //   },
+  // });
+
+  // const paths = data.map(episode => {
+  //   return {
+  //     params: {
+  //       slug: episode.id
+  //     }
+  //   }
+  // })
+
+  // return {
+  //   paths,
+  //   fallback: "blocking",
+  // };
+
   return {
     paths: [],
     fallback: "blocking",
@@ -82,7 +125,7 @@ export const getStaticProps: GetStaticProps = async (ctx) => {
 
   return {
     props: {
-        episode
+      episode,
     },
     revalidate: 60 * 60 * 24, // 24h
   };
